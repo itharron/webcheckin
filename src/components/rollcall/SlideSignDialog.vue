@@ -20,7 +20,7 @@ const queue = ref<Student[]>([]);
 const marks = reactive<Record<string, AttendanceStatus>>({});
 const history = ref<Array<{ student: Student; status: AttendanceStatus }>>([]);
 
-const VISIBLE_COUNT = 6;
+const VISIBLE_COUNT = 12;
 const visible = computed(() => queue.value.slice(0, VISIBLE_COUNT));
 const currentStudent = computed<Student | undefined>(() => queue.value[0]);
 const total = computed(() => props.students.length);
@@ -100,7 +100,7 @@ let lastCommit = 0;
 function onWheel(e: WheelEvent): void {
   e.preventDefault();
   const now = Date.now();
-  if (now - lastCommit < 220) return;
+  if (now - lastCommit < 110) return;
   lastCommit = now;
   if (e.deltaY < 0) commit('present');
   else if (e.deltaY > 0) commit('absent');
@@ -109,7 +109,7 @@ function onWheel(e: WheelEvent): void {
 // —— 指针拖拽（统一鼠标 / 触摸）——
 let dragging = false;
 let dragStartY = 0;
-const DRAG_THRESHOLD = 42;
+const DRAG_THRESHOLD = 26;
 
 function onPointerDown(e: PointerEvent): void {
   dragging = true;
@@ -165,7 +165,7 @@ function onPointerUp(): void {
     <div
       class="relative mx-auto select-none overflow-hidden rounded-xl"
       style="
-        height: 380px;
+        height: 592px;
         max-width: 360px;
         border: 1px solid var(--color-border);
         touch-action: none;
@@ -190,13 +190,13 @@ function onPointerUp(): void {
           v-for="(s, i) in visible"
           :key="s.id"
           class="flex items-center justify-between px-4"
-          style="height: 56px; border-bottom: 1px solid var(--color-border)"
+          style="height: 44px; border-bottom: 1px solid var(--color-border)"
           :class="i === 0 ? 'current-row' : ''"
         >
           <div class="min-w-0">
             <PinyinName
               :name="s.name || ''"
-              class="text-xl font-bold"
+              class="text-base font-bold"
               :class="i === 0 ? 'text-primary' : 'text-text-main'"
             />
           </div>
@@ -215,7 +215,7 @@ function onPointerUp(): void {
           v-for="n in Math.max(0, VISIBLE_COUNT - visible.length)"
           :key="'ph-' + n"
           class="flex items-center px-4"
-          style="height: 56px; border-bottom: 1px dashed var(--color-border)"
+          style="height: 44px; border-bottom: 1px dashed var(--color-border)"
         >
           <span class="text-sm text-text-sub opacity-40">· · ·</span>
         </div>
