@@ -2,11 +2,15 @@
 import { computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useAttendanceStore } from '@/stores/attendance';
+import { useSettingsStore } from '@/stores/settings';
 import { HomeFilled, User, Timer, Calendar } from '@element-plus/icons-vue';
 import type { Component } from 'vue';
+import ParticlesBackground from '@/components/common/ParticlesBackground.vue';
 
 const route = useRoute();
 const attendance = useAttendanceStore();
+const settings = useSettingsStore();
+const isDark = computed(() => settings.theme === 'dark');
 
 onMounted(() => {
   attendance.init();
@@ -33,9 +37,11 @@ function isActive(item: NavItem): boolean {
 
 <template>
   <div class="flex h-screen overflow-hidden">
+    <ParticlesBackground v-if="isDark" />
+
     <!-- PC 侧边栏 -->
     <aside
-      class="hidden w-56 shrink-0 flex-col md:flex"
+      class="relative z-10 hidden w-56 shrink-0 flex-col md:flex"
       style="background: var(--color-card); border-right: 1px solid var(--color-border)"
     >
       <div class="flex items-center gap-3 px-5 py-5">
@@ -63,7 +69,7 @@ function isActive(item: NavItem): boolean {
     </aside>
 
     <!-- 主内容 -->
-    <div class="flex min-w-0 flex-1 flex-col">
+    <div class="relative z-10 flex min-w-0 flex-1 flex-col">
       <main class="flex-1 overflow-y-auto pb-20 md:pb-0">
         <router-view v-slot="{ Component: View }">
           <transition name="page" mode="out-in">

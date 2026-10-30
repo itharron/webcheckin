@@ -6,6 +6,7 @@ import { useRosterStore } from '@/stores/roster';
 import { useAttendanceStore } from '@/stores/attendance';
 import AppHeader from '@/components/common/AppHeader.vue';
 import QuickStats from '@/components/rollcall/QuickStats.vue';
+import TypeWriter from '@/components/common/TypeWriter.vue';
 import { User, Calendar, Timer } from '@element-plus/icons-vue';
 
 const roster = useRosterStore();
@@ -57,6 +58,10 @@ function go(path: string): void {
         <h2 class="mt-1 text-3xl font-bold tracking-tight text-text-main md:text-4xl">
           {{ todayText }}
         </h2>
+        <p class="mt-3 flex items-center gap-2 text-sm text-text-sub">
+          <span class="font-mono text-primary">&gt;</span>
+          <TypeWriter :phrases="['开始今天的签到吧', '记录每一次出勤', '名单数据安全保存在本地']" />
+        </p>
       </section>
 
       <!-- 核心数据卡片 -->
