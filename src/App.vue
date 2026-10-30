@@ -49,7 +49,17 @@ function isActive(item: NavItem): boolean {
           class="flex h-10 w-10 items-center justify-center rounded-xl text-white"
           style="background: var(--color-primary)"
         >
-          <el-icon :size="20"><Timer /></el-icon>
+          <svg viewBox="0 0 24 24" width="20" height="20">
+            <circle cx="12" cy="6.4" r="2.6" fill="currentColor" />
+            <path
+              d="M5.6 13.8 L10 18 L18.4 9.4"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
         </div>
         <span class="text-base font-bold text-text-main">点名签到</span>
       </div>

@@ -16,9 +16,15 @@ defineProps<{
         class="flex h-9 w-9 items-center justify-center rounded-xl text-white"
         style="background: var(--color-primary)"
       >
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+        <svg viewBox="0 0 24 24" width="18" height="18">
+          <circle cx="12" cy="6.4" r="2.6" fill="currentColor" />
           <path
-            d="M12 3a3 3 0 0 0-3 3v2h-2a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-2V6a3 3 0 0 0-3-3zm-1 3a1 1 0 1 1 2 0v2h-2V6z"
+            d="M5.6 13.8 L10 18 L18.4 9.4"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.6"
+            stroke-linecap="round"
+            stroke-linejoin="round"
           />
         </svg>
       </div>
