@@ -8,6 +8,7 @@ import type { AttendanceStatus, Student } from '@/types';
 import AppHeader from '@/components/common/AppHeader.vue';
 import RollCallProgress from '@/components/rollcall/RollCallProgress.vue';
 import RollCallDialog from '@/components/rollcall/RollCallDialog.vue';
+import SlideSignDialog from '@/components/rollcall/SlideSignDialog.vue';
 
 const roster = useRosterStore();
 const attendance = useAttendanceStore();
@@ -21,6 +22,7 @@ const todayText = dayjs().format('YYYY年MM月DD日');
 
 const showDialog = ref(false);
 const queue = ref<Student[]>([]);
+const signMode = ref<'buttons' | 'slide'>('buttons');
 
 const baselinePresent = ref(0);
 const sessionPresent = ref(0);
@@ -166,6 +168,24 @@ async function onComplete(results: Array<{ student: Student; status: AttendanceS
       </div>
 
       <div class="mt-6">
+        <div class="mb-3 grid grid-cols-2 gap-2">
+          <button
+            class="rounded-lg py-2.5 text-sm font-medium transition"
+            :class="signMode === 'buttons' ? 'bg-primary text-white' : 'bg-[var(--color-bg)] text-text-main'"
+            style="border: 1px solid var(--color-border)"
+            @click="signMode = 'buttons'"
+          >
+            按钮签到
+          </button>
+          <button
+            class="rounded-lg py-2.5 text-sm font-medium transition"
+            :class="signMode === 'slide' ? 'bg-primary text-white' : 'bg-[var(--color-bg)] text-text-main'"
+            style="border: 1px solid var(--color-border)"
+            @click="signMode = 'slide'"
+          >
+            滑动签到
+          </button>
+        </div>
         <el-button
           size="large"
           type="primary"
@@ -175,12 +195,20 @@ async function onComplete(results: Array<{ student: Student; status: AttendanceS
           开始签到
         </el-button>
         <p class="mt-3 text-center text-xs text-text-sub">
-          将按所选事件逐一点名，同一事件每天可多次签到
+          {{ signMode === 'buttons' ? '逐一点名，点击按钮标记' : '上滑标记已到，右滑标记未到' }}
         </p>
       </div>
     </main>
 
     <RollCallDialog
+      v-if="signMode === 'buttons'"
+      v-model="showDialog"
+      :students="queue"
+      @progress="onProgress"
+      @complete="onComplete"
+    />
+    <SlideSignDialog
+      v-else
       v-model="showDialog"
       :students="queue"
       @progress="onProgress"
