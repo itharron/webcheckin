@@ -38,6 +38,17 @@ watch(
   { immediate: true }
 );
 
+/** 移动端事件下拉选择：绑定「日期|事件」组合 */
+const activeKey = computed<string>({
+  get: () => `${selectedDate.value}|${selectedEvent.value}`,
+  set: (val: string) => {
+    const [date, event] = val.split('|');
+    selectedDate.value = date;
+    selectedEvent.value = event;
+    selection.value = [];
+  },
+});
+
 function selectEvent(item: { date: string; event: string }): void {
   selectedDate.value = item.date;
   selectedEvent.value = item.event;
@@ -218,6 +229,18 @@ function handleExport(type: 'xlsx' | 'csv'): void {
                   {{ selectedEvent || '签到记录' }}
                 </h2>
                 <p class="mt-0.5 text-sm text-text-sub">{{ selectedDate }}</p>
+                <el-select
+                  v-model="activeKey"
+                  class="!mt-3 !w-full lg:!hidden"
+                  placeholder="选择签到事件"
+                >
+                  <el-option
+                    v-for="item in eventItems"
+                    :key="item.date + '|' + item.event"
+                    :label="`${item.date} · ${item.event}`"
+                    :value="`${item.date}|${item.event}`"
+                  />
+                </el-select>
               </div>
               <div class="flex flex-wrap gap-2">
                 <el-button

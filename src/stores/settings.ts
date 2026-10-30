@@ -4,14 +4,12 @@ import type { Theme } from '@/types';
 
 const THEME_KEY = 'roll-call-theme';
 
-/** 从 LocalStorage 读取已保存主题，或回退到系统偏好 */
+/** 从 LocalStorage 读取已保存主题，未选择时默认暗色 */
 function detectInitialTheme(): Theme {
   const saved = localStorage.getItem(THEME_KEY);
   if (saved === 'light' || saved === 'dark') return saved;
-  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    return 'dark';
-  }
-  return 'light';
+  // 未手动选择过主题时，默认使用暗色模式
+  return 'dark';
 }
 
 export const useSettingsStore = defineStore('settings', () => {
