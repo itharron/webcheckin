@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue';
 import type { AttendanceStatus, Student } from '@/types';
-import { RefreshLeft, Top, Bottom } from '@element-plus/icons-vue';
+import { RefreshLeft, Top } from '@element-plus/icons-vue';
 import PinyinName from '@/components/common/PinyinName.vue';
 
 const props = defineProps<{
@@ -100,31 +100,43 @@ let lastCommit = 0;
 function onWheel(e: WheelEvent): void {
   e.preventDefault();
   const now = Date.now();
-  if (now - lastCommit < 110) return;
+  if (now - lastCommit < 88) return;
   lastCommit = now;
   if (e.deltaY < 0) commit('present');
-  else if (e.deltaY > 0) commit('absent');
+  else if (e.deltaY > 0) undo();
 }
 
 // —— 指针拖拽（统一鼠标 / 触摸）——
 let dragging = false;
+let dragStartX = 0;
 let dragStartY = 0;
-const DRAG_THRESHOLD = 26;
+const DRAG_THRESHOLD = 21;
+
+function resetDragAnchor(x: number, y: number): void {
+  dragStartX = x;
+  dragStartY = y;
+}
 
 function onPointerDown(e: PointerEvent): void {
   dragging = true;
-  dragStartY = e.clientY;
+  resetDragAnchor(e.clientX, e.clientY);
   (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
 }
 function onPointerMove(e: PointerEvent): void {
   if (!dragging) return;
+  const dx = e.clientX - dragStartX;
   const dy = e.clientY - dragStartY;
-  if (dy < -DRAG_THRESHOLD) {
-    commit('present');
-    dragStartY = e.clientY;
-  } else if (dy > DRAG_THRESHOLD) {
+  if (Math.abs(dy) >= Math.abs(dx)) {
+    if (dy < -DRAG_THRESHOLD) {
+      commit('present');
+      resetDragAnchor(e.clientX, e.clientY);
+    } else if (dy > DRAG_THRESHOLD) {
+      undo();
+      resetDragAnchor(e.clientX, e.clientY);
+    }
+  } else if (dx > DRAG_THRESHOLD) {
     commit('absent');
-    dragStartY = e.clientY;
+    resetDragAnchor(e.clientX, e.clientY);
   }
 }
 function onPointerUp(): void {
@@ -184,6 +196,14 @@ function onPointerUp(): void {
         <el-icon><Top /></el-icon> 向上滚 = 已到
       </div>
 
+      <!-- 右侧「未到」指示 -->
+      <div
+        class="absolute right-0 top-1/2 z-20 -translate-y-1/2 rounded-l-lg px-1 py-2 text-xs font-semibold text-danger"
+        style="background: var(--color-bg); border: 1px solid var(--color-danger); writing-mode: vertical-rl; letter-spacing: 2px;"
+      >
+        向右滑 = 未到
+      </div>
+
       <!-- 名字列表 -->
       <div :key="done" class="roll-list pt-8 pb-8">
         <div
@@ -221,12 +241,12 @@ function onPointerUp(): void {
         </div>
       </div>
 
-      <!-- 底部「未到」线 -->
+      <!-- 底部「回撤」线 -->
       <div
-        class="absolute inset-x-0 bottom-0 z-20 flex items-center justify-center gap-1 py-1 text-xs font-semibold text-danger"
-        style="background: var(--color-bg); border-top: 1px solid var(--color-danger)"
+        class="absolute inset-x-0 bottom-0 z-20 flex items-center justify-center gap-1 py-1 text-xs font-semibold text-text-sub"
+        style="background: var(--color-bg); border-top: 1px solid var(--color-border)"
       >
-        <el-icon><Bottom /></el-icon> 向下滚 = 未到
+        <el-icon><RefreshLeft /></el-icon> 向下滚 = 回撤
       </div>
 
       <!-- 最近操作浮层 -->
@@ -254,7 +274,7 @@ function onPointerUp(): void {
     </div>
 
     <p class="mt-3 text-center text-xs text-text-sub">
-      向上滚动列表 = 持续已到 · 向下滚动 = 未到
+      向上滚 = 已到 · 向右滑 = 未到 · 向下滚 = 回撤
     </p>
   </el-dialog>
 </template>
