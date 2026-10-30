@@ -1,15 +1,25 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import type { Student } from '@/types';
 import { Edit, Delete } from '@element-plus/icons-vue';
 
-defineProps<{
+const props = defineProps<{
   students: Student[];
+  selection: Student[];
 }>();
 
 const emit = defineEmits<{
   (e: 'edit', student: Student): void;
   (e: 'delete', student: Student): void;
+  (e: 'update:selection', students: Student[]): void;
 }>();
+
+const allSelected = computed(
+  () => props.students.length > 0 && props.selection.length === props.students.length
+);
+const indeterminate = computed(
+  () => props.selection.length > 0 && props.selection.length < props.students.length
+);
 
 /** el-table 作用域插槽的 row 为 DefaultRow，此处收窄为 Student */
 function onEdit(row: unknown): void {
@@ -18,12 +28,34 @@ function onEdit(row: unknown): void {
 function onDelete(row: unknown): void {
   emit('delete', row as Student);
 }
+
+function isSelected(raw: unknown): boolean {
+  return props.selection.some((s) => s.id === (raw as Student).id);
+}
+function toggleSelect(raw: unknown, checked: unknown): void {
+  const student = raw as Student;
+  const list = checked
+    ? [...props.selection, student]
+    : props.selection.filter((s) => s.id !== student.id);
+  emit('update:selection', list);
+}
+function toggleAll(checked: unknown): void {
+  emit('update:selection', checked ? [...props.students] : []);
+}
 </script>
 
 <template>
   <!-- PC 端：表格 -->
   <div class="hidden md:block">
     <el-table :data="students" style="width: 100%" row-key="id">
+      <el-table-column width="50" align="center">
+        <template #header>
+          <el-checkbox :model-value="allSelected" :indeterminate="indeterminate" @change="toggleAll" />
+        </template>
+        <template #default="{ row }">
+          <el-checkbox :model-value="isSelected(row)" @change="toggleSelect(row, $event)" />
+        </template>
+      </el-table-column>
       <el-table-column type="index" label="序号" width="70" align="center" />
       <el-table-column prop="name" label="姓名" min-width="140" />
       <el-table-column prop="studentNo" label="学号 / 编号" min-width="180">
@@ -51,9 +83,12 @@ function onDelete(row: unknown): void {
         :key="student.id"
         class="app-card flex items-center justify-between px-4 py-3"
       >
-        <div class="min-w-0">
-          <p class="truncate text-sm font-medium text-text-main">{{ student.name }}</p>
-          <p class="mt-0.5 truncate text-xs text-text-sub">{{ student.studentNo || '暂无学号' }}</p>
+        <div class="flex min-w-0 items-center gap-3">
+          <el-checkbox :model-value="isSelected(student)" @change="toggleSelect(student, $event)" />
+          <div class="min-w-0">
+            <p class="truncate text-sm font-medium text-text-main">{{ student.name }}</p>
+            <p class="mt-0.5 truncate text-xs text-text-sub">{{ student.studentNo || '暂无学号' }}</p>
+          </div>
         </div>
         <div class="ml-3 flex shrink-0 gap-1">
           <el-button size="small" text type="primary" @click="emit('edit', student)">编辑</el-button>

@@ -26,22 +26,34 @@ const sessionPresent = ref(0);
 const livePresent = computed(() => baselinePresent.value + sessionPresent.value);
 const total = computed(() => roster.count);
 
+/** 签到事件选择 */
+const eventType = ref<'早自习' | '晚自习' | 'custom'>('早自习');
+const customEventName = ref('');
+const currentEvent = computed(() =>
+  eventType.value === 'custom' ? customEventName.value.trim() : eventType.value
+);
+
 /** 已完成统计弹窗 */
 const summaryVisible = ref(false);
-const summary = reactive({ present: 0, absent: 0, rate: 0 });
+const summary = reactive({ present: 0, absent: 0, rate: 0, event: '' });
 
-/** 开始签到：从名单中筛出今日尚未签到的人员 */
+/** 开始签到：从名单中筛出该事件尚未签到的人员 */
 function startRollCall(): void {
   if (roster.count === 0) {
     ElMessage.warning('名单为空，请先添加人员');
     return;
   }
-  const already = attendance.recordsForDate(todayStr);
+  const event = currentEvent.value;
+  if (!event) {
+    ElMessage.warning('请输入自定义事件名称');
+    return;
+  }
+  const already = attendance.recordsForDate(todayStr, event);
   const signedIds = new Set(already.map((r) => r.studentId));
   const pending = roster.students.filter((s) => !signedIds.has(s.id));
 
   if (pending.length === 0) {
-    ElMessage.success('今日已完成全员签到');
+    ElMessage.success('该事件已完成全员签到');
     return;
   }
 
@@ -58,15 +70,17 @@ function onProgress(payload: { current: number; total: number; present: number; 
 /** 签到完成：持久化记录并展示统计 */
 async function onComplete(results: Array<{ student: Student; status: AttendanceStatus }>): Promise<void> {
   try {
+    const event = currentEvent.value;
     for (const item of results) {
       await attendance.addRecord({
         studentId: item.student.id,
         studentNo: item.student.studentNo,
         name: item.student.name,
         status: item.status,
+        event,
       });
     }
-    const todayRecords = attendance.recordsForDate(todayStr);
+    const todayRecords = attendance.recordsForDate(todayStr, event);
     const present = todayRecords.filter((r) => r.status === 'present').length;
     const absent = todayRecords.filter((r) => r.status === 'absent').length;
     const rate = total.value > 0 ? Math.round((present / total.value) * 100) : 0;
@@ -74,6 +88,7 @@ async function onComplete(results: Array<{ student: Student; status: AttendanceS
     summary.present = present;
     summary.absent = absent;
     summary.rate = rate;
+    summary.event = event;
     summaryVisible.value = true;
 
     await attendance.createSession({
@@ -102,6 +117,24 @@ async function onComplete(results: Array<{ student: Student; status: AttendanceS
 
       <RollCallProgress :present="livePresent" :total="total" />
 
+      <div class="app-card mt-6 p-4">
+        <p class="mb-2 text-sm font-medium text-text-main">签到事件</p>
+        <el-select v-model="eventType" class="w-full" size="large">
+          <el-option label="早自习" value="早自习" />
+          <el-option label="晚自习" value="晚自习" />
+          <el-option label="自定义事件" value="custom" />
+        </el-select>
+        <el-input
+          v-if="eventType === 'custom'"
+          v-model="customEventName"
+          class="mt-3"
+          size="large"
+          maxlength="20"
+          show-word-limit
+          placeholder="请输入事件名称，如：午自习"
+        />
+      </div>
+
       <div class="mt-6">
         <el-button
           size="large"
@@ -112,7 +145,7 @@ async function onComplete(results: Array<{ student: Student; status: AttendanceS
           开始签到
         </el-button>
         <p class="mt-3 text-center text-xs text-text-sub">
-          将按名单顺序逐一点名，签到时间精确到秒
+          将按所选事件逐一点名，同一事件每天可多次签到
         </p>
       </div>
     </main>
@@ -140,6 +173,7 @@ async function onComplete(results: Array<{ student: Student; status: AttendanceS
         >
           {{ summary.rate }}%
         </div>
+        <p class="mb-3 text-sm font-medium text-primary">{{ summary.event }}</p>
         <p class="text-base text-text-main">
           已到 <span class="font-bold text-success">{{ summary.present }}</span> 人，
           未到 <span class="font-bold text-danger">{{ summary.absent }}</span> 人

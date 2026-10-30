@@ -13,6 +13,9 @@ export interface Student {
 /** 签到状态 */
 export type AttendanceStatus = 'present' | 'absent';
 
+/** 签到事件名（如「早自习」「晚自习」或自定义事件名） */
+export type AttendanceEvent = string;
+
 /** 签到记录 */
 export interface AttendanceRecord {
   /** 唯一 ID */
@@ -25,6 +28,8 @@ export interface AttendanceRecord {
   name: string;
   /** 签到日期 YYYY-MM-DD */
   date: string;
+  /** 签到事件（早自习 / 晚自习 / 自定义事件名） */
+  event: AttendanceEvent;
   /** 签到具体时间 HH:mm:ss */
   time: string;
   /** 签到时间戳 */

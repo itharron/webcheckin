@@ -18,7 +18,8 @@ export const useAttendanceStore = defineStore('attendance', () => {
         db.getAllRecords(),
         db.getAllSessions(),
       ]);
-      records.value = allRecords;
+      // 兼容旧数据：补齐缺失的 event 字段（旧版按天签到，无事件概念）
+      records.value = allRecords.map((r) => ({ ...r, event: r.event ?? '早自习' }));
       sessions.value = allSessions;
       loaded.value = true;
     } catch (err) {
@@ -26,17 +27,17 @@ export const useAttendanceStore = defineStore('attendance', () => {
     }
   }
 
-  /** 获取某日期的记录（按时间倒序） */
-  function recordsForDate(date: string): AttendanceRecord[] {
+  /** 获取某日期（可选指定事件）的记录（按时间倒序） */
+  function recordsForDate(date: string, event?: string): AttendanceRecord[] {
     return records.value
-      .filter((r) => r.date === date)
+      .filter((r) => r.date === date && (event === undefined || r.event === event))
       .slice()
       .sort((a, b) => b.timestamp - a.timestamp);
   }
 
-  /** 获取某学生在某日期的记录 */
-  function recordForStudent(studentId: string, date: string): AttendanceRecord | undefined {
-    return records.value.find((r) => r.studentId === studentId && r.date === date);
+  /** 获取某学生在某日期某事件的记录 */
+  function recordForStudent(studentId: string, date: string, event: string): AttendanceRecord | undefined {
+    return records.value.find((r) => r.studentId === studentId && r.date === date && r.event === event);
   }
 
   /** 计算某日期统计（结合名单总人数） */
@@ -45,8 +46,8 @@ export const useAttendanceStore = defineStore('attendance', () => {
     return statsForDate(date);
   });
 
-  function statsForDate(date: string, rosterTotal?: number): DateStats {
-    const list = recordsForDate(date);
+  function statsForDate(date: string, rosterTotal?: number, event?: string): DateStats {
+    const list = recordsForDate(date, event);
     const present = list.filter((r) => r.status === 'present').length;
     const absent = list.filter((r) => r.status === 'absent').length;
     const total = rosterTotal !== undefined ? rosterTotal : list.length;
@@ -60,6 +61,7 @@ export const useAttendanceStore = defineStore('attendance', () => {
     studentNo: string;
     name: string;
     status: AttendanceStatus;
+    event: string;
   }): Promise<AttendanceRecord> {
     const now = dayjs();
     const record: AttendanceRecord = {
@@ -68,12 +70,13 @@ export const useAttendanceStore = defineStore('attendance', () => {
       studentNo: input.studentNo,
       name: input.name,
       date: now.format('YYYY-MM-DD'),
+      event: input.event,
       time: now.format('HH:mm:ss'),
       timestamp: now.valueOf(),
       status: input.status,
     };
     const existing = records.value.find(
-      (r) => r.studentId === input.studentId && r.date === record.date
+      (r) => r.studentId === input.studentId && r.date === record.date && r.event === record.event
     );
     if (existing) {
       // 覆盖已有记录
@@ -139,6 +142,11 @@ export const useAttendanceStore = defineStore('attendance', () => {
     return records.value.some((r) => r.date === date);
   }
 
+  /** 某日期下已有的签到事件名列表（去重，按记录顺序） */
+  function eventsForDate(date: string): string[] {
+    return [...new Set(records.value.filter((r) => r.date === date).map((r) => r.event))];
+  }
+
   return {
     records,
     sessions,
@@ -152,6 +160,7 @@ export const useAttendanceStore = defineStore('attendance', () => {
     updateStatus,
     removeRecord,
     recordDates,
+    eventsForDate,
     createSession,
     recentSession,
     hasRecords,

@@ -52,6 +52,19 @@ export const useRosterStore = defineStore('roster', () => {
     persist();
   }
 
+  /** 批量删除学生 */
+  function removeStudents(ids: string[]): void {
+    const idSet = new Set(ids);
+    students.value = students.value.filter((s) => !idSet.has(s.id));
+    persist();
+  }
+
+  /** 清空全部学生 */
+  function clearAll(): void {
+    students.value = [];
+    persist();
+  }
+
   /** 批量导入（自动去重：学号相同视为同一人） */
   function bulkAdd(items: ImportedStudent[]): { added: number; skipped: number } {
     let added = 0;
@@ -81,5 +94,5 @@ export const useRosterStore = defineStore('roster', () => {
 
   const count = computed(() => students.value.length);
 
-  return { students, count, addStudent, updateStudent, removeStudent, bulkAdd };
+  return { students, count, addStudent, updateStudent, removeStudent, removeStudents, clearAll, bulkAdd };
 });

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import dayjs from 'dayjs';
 import { useRosterStore } from '@/stores/roster';
 import { useAttendanceStore } from '@/stores/attendance';
@@ -17,9 +17,22 @@ onMounted(() => {
 });
 
 const selectedDate = ref(dayjs().format('YYYY-MM-DD'));
+const selectedEvent = ref('');
+
+const eventList = computed<string[]>(() => attendance.eventsForDate(selectedDate.value));
+
+// 切换日期时，若当前事件不在该日期下，自动选中第一个事件
+watch(eventList, (list) => {
+  if (list.length > 0 && !list.includes(selectedEvent.value)) {
+    selectedEvent.value = list[0];
+  }
+});
 
 const records = computed<AttendanceRecord[]>(() =>
-  attendance.recordsForDate(selectedDate.value).slice().sort((a, b) => a.timestamp - b.timestamp)
+  attendance
+    .recordsForDate(selectedDate.value, selectedEvent.value || undefined)
+    .slice()
+    .sort((a, b) => a.timestamp - b.timestamp)
 );
 
 const stats = computed(() => {
@@ -67,13 +80,13 @@ async function handleDelete(raw: unknown): Promise<void> {
 
 function handleExport(type: 'xlsx' | 'csv'): void {
   if (records.value.length === 0) {
-    ElMessage.warning('当前日期没有记录，无法导出');
+    ElMessage.warning('当前事件没有记录，无法导出');
     return;
   }
   if (type === 'xlsx') {
-    exportRecordsToExcel(records.value, selectedDate.value);
+    exportRecordsToExcel(records.value, selectedDate.value, selectedEvent.value);
   } else {
-    exportRecordsToCsv(records.value, selectedDate.value);
+    exportRecordsToCsv(records.value, selectedDate.value, selectedEvent.value);
   }
   ElMessage.success('导出成功');
 }
@@ -107,13 +120,18 @@ function handleExport(type: 'xlsx' | 'csv'): void {
         <div class="min-w-0">
           <!-- 顶部：日期 + 导出 -->
           <div class="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <el-date-picker
-              v-model="selectedDate"
-              type="date"
-              value-format="YYYY-MM-DD"
-              placeholder="选择日期"
-              class="!w-full md:!w-44"
-            />
+            <div class="flex flex-col gap-2 md:flex-row md:items-center">
+              <el-date-picker
+                v-model="selectedDate"
+                type="date"
+                value-format="YYYY-MM-DD"
+                placeholder="选择日期"
+                class="!w-full md:!w-44"
+              />
+              <el-select v-model="selectedEvent" placeholder="选择事件" class="w-full md:!w-44">
+                <el-option v-for="ev in eventList" :key="ev" :label="ev" :value="ev" />
+              </el-select>
+            </div>
             <el-dropdown trigger="click" @command="handleExport">
               <el-button type="primary">导出当日记录</el-button>
               <template #dropdown>

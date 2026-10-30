@@ -8,11 +8,12 @@ import StudentFormDialog from '@/components/roster/StudentFormDialog.vue';
 import RosterImport from '@/components/roster/RosterImport.vue';
 import { exportRosterToExcel } from '@/utils/export';
 import type { ImportedStudent } from '@/utils/import';
-import { Plus, Search, Upload, Download } from '@element-plus/icons-vue';
+import { Plus, Search, Upload, Download, Delete } from '@element-plus/icons-vue';
 
 const roster = useRosterStore();
 
 const searchQuery = ref('');
+const selection = ref<Student[]>([]);
 const formVisible = ref(false);
 const importVisible = ref(false);
 const editingStudent = ref<Student | null>(null);
@@ -59,6 +60,41 @@ async function handleDelete(student: Student): Promise<void> {
   ElMessage.success('已删除');
 }
 
+async function handleDeleteSelected(): Promise<void> {
+  if (selection.value.length === 0) return;
+  try {
+    await ElMessageBox.confirm(`确定删除选中的 ${selection.value.length} 人吗？`, '批量删除确认', {
+      type: 'warning',
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
+    });
+  } catch {
+    return;
+  }
+  roster.removeStudents(selection.value.map((s) => s.id));
+  ElMessage.success(`已删除 ${selection.value.length} 人`);
+  selection.value = [];
+}
+
+async function handleClearAll(): Promise<void> {
+  if (roster.count === 0) {
+    ElMessage.warning('名单已为空');
+    return;
+  }
+  try {
+    await ElMessageBox.confirm(`确定删除全部 ${roster.count} 人吗？此操作不可恢复。`, '全部删除确认', {
+      type: 'warning',
+      confirmButtonText: '全部删除',
+      cancelButtonText: '取消',
+    });
+  } catch {
+    return;
+  }
+  roster.clearAll();
+  selection.value = [];
+  ElMessage.success('已清空名单');
+}
+
 function handleImported(items: ImportedStudent[]): void {
   const { added, skipped } = roster.bulkAdd(items);
   ElMessage.success(`导入完成：新增 ${added} 人${skipped ? `，跳过 ${skipped} 人（重复）` : ''}`);
@@ -92,11 +128,21 @@ function handleExport(): void {
           <el-button type="primary" :icon="Plus" @click="openAdd">添加人员</el-button>
           <el-button :icon="Upload" @click="importVisible = true">批量导入</el-button>
           <el-button :icon="Download" @click="handleExport">导出名单</el-button>
+          <el-button
+            v-if="selection.length > 0"
+            type="danger"
+            :icon="Delete"
+            @click="handleDeleteSelected"
+          >
+            删除选中 ({{ selection.length }})
+          </el-button>
+          <el-button type="danger" plain @click="handleClearAll">全部删除</el-button>
         </div>
       </div>
 
       <!-- 列表 -->
       <RosterTable
+        v-model:selection="selection"
         :students="filteredStudents"
         @edit="openEdit"
         @delete="handleDelete"
