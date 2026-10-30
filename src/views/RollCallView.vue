@@ -3,6 +3,7 @@ import { computed, onMounted, reactive, ref } from 'vue';
 import dayjs from 'dayjs';
 import { useRosterStore } from '@/stores/roster';
 import { useAttendanceStore } from '@/stores/attendance';
+import { useSettingsStore } from '@/stores/settings';
 import type { AttendanceStatus, Student } from '@/types';
 import AppHeader from '@/components/common/AppHeader.vue';
 import RollCallProgress from '@/components/rollcall/RollCallProgress.vue';
@@ -26,12 +27,45 @@ const sessionPresent = ref(0);
 const livePresent = computed(() => baselinePresent.value + sessionPresent.value);
 const total = computed(() => roster.count);
 
+const settings = useSettingsStore();
+
 /** 签到事件选择 */
-const eventType = ref<'早自习' | '晚自习' | 'custom'>('早自习');
-const customEventName = ref('');
-const currentEvent = computed(() =>
-  eventType.value === 'custom' ? customEventName.value.trim() : eventType.value
-);
+const selectedEvent = ref('早自习');
+const eventOptions = computed(() => {
+  const base = ['早自习', '晚自习'];
+  const customs = settings.customEvents.filter((e) => !base.includes(e));
+  return [...base, ...customs];
+});
+const currentEvent = computed(() => selectedEvent.value.trim());
+
+/** 事件管理弹窗 */
+const manageVisible = ref(false);
+const newEventName = ref('');
+
+function addEvent(): void {
+  const name = newEventName.value.trim();
+  if (!name) {
+    ElMessage.warning('请输入事件名称');
+    return;
+  }
+  if (name === '早自习' || name === '晚自习') {
+    ElMessage.warning('该事件已存在');
+    return;
+  }
+  if (settings.addCustomEvent(name)) {
+    selectedEvent.value = name;
+    newEventName.value = '';
+    ElMessage.success('已添加事件');
+  } else {
+    ElMessage.warning('该事件已存在');
+  }
+}
+
+function removeEvent(name: string): void {
+  if (selectedEvent.value === name) selectedEvent.value = '早自习';
+  settings.removeCustomEvent(name);
+  ElMessage.success('已删除事件');
+}
 
 /** 已完成统计弹窗 */
 const summaryVisible = ref(false);
@@ -118,21 +152,13 @@ async function onComplete(results: Array<{ student: Student; status: AttendanceS
       <RollCallProgress :present="livePresent" :total="total" />
 
       <div class="app-card mt-6 p-4">
-        <p class="mb-2 text-sm font-medium text-text-main">签到事件</p>
-        <el-select v-model="eventType" class="w-full" size="large">
-          <el-option label="早自习" value="早自习" />
-          <el-option label="晚自习" value="晚自习" />
-          <el-option label="自定义事件" value="custom" />
+        <div class="mb-2 flex items-center justify-between">
+          <p class="text-sm font-medium text-text-main">签到事件</p>
+          <el-button link type="primary" @click="manageVisible = true">管理事件</el-button>
+        </div>
+        <el-select v-model="selectedEvent" class="w-full" size="large">
+          <el-option v-for="e in eventOptions" :key="e" :label="e" :value="e" />
         </el-select>
-        <el-input
-          v-if="eventType === 'custom'"
-          v-model="customEventName"
-          class="mt-3"
-          size="large"
-          maxlength="20"
-          show-word-limit
-          placeholder="请输入事件名称，如：午自习"
-        />
       </div>
 
       <div class="mt-6">
@@ -187,6 +213,64 @@ async function onComplete(results: Array<{ student: Student; status: AttendanceS
           </router-link>
           <el-button class="flex-1" type="primary" @click="summaryVisible = false">完成</el-button>
         </div>
+      </template>
+    </el-dialog>
+
+    <!-- 事件管理 -->
+    <el-dialog
+      v-model="manageVisible"
+      title="管理签到事件"
+      width="92%"
+      :style="{ maxWidth: '440px' }"
+      align-center
+    >
+      <div class="space-y-5">
+        <div>
+          <p class="mb-2 text-xs text-text-sub">固定事件</p>
+          <div class="flex flex-wrap gap-2">
+            <el-tag v-for="e in ['早自习', '晚自习']" :key="e" type="info" effect="plain">
+              {{ e }}
+            </el-tag>
+          </div>
+        </div>
+
+        <div>
+          <p class="mb-2 text-xs text-text-sub">自定义事件（可删除）</p>
+          <div
+            v-if="settings.customEvents.length === 0"
+            class="rounded-lg border border-dashed p-3 text-center text-xs text-text-sub"
+            style="border-color: var(--color-border)"
+          >
+            暂无自定义事件，可在下方添加
+          </div>
+          <div v-else class="flex flex-col gap-2">
+            <div
+              v-for="e in settings.customEvents"
+              :key="e"
+              class="flex items-center justify-between rounded-lg px-3 py-2"
+              style="border: 1px solid var(--color-border)"
+            >
+              <span class="text-sm text-text-main">{{ e }}</span>
+              <el-button link type="danger" @click="removeEvent(e)">删除</el-button>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <p class="mb-2 text-xs text-text-sub">添加事件</p>
+          <div class="flex gap-2">
+            <el-input
+              v-model="newEventName"
+              maxlength="20"
+              placeholder="输入事件名称"
+              @keyup.enter="addEvent"
+            />
+            <el-button type="primary" @click="addEvent">添加</el-button>
+          </div>
+        </div>
+      </div>
+      <template #footer>
+        <el-button type="primary" class="w-full" @click="manageVisible = false">完成</el-button>
       </template>
     </el-dialog>
   </div>
