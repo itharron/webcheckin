@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue';
 import dayjs from 'dayjs';
-import { ElMessage } from 'element-plus';
 import { useRosterStore } from '@/stores/roster';
 import { useAttendanceStore } from '@/stores/attendance';
 import type { AttendanceStatus, Student } from '@/types';

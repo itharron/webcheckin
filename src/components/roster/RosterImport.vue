@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { ElMessage, type UploadFile, type UploadInstance } from 'element-plus';
-import { UploadFilled } from '@element-plus/icons-vue';
+import type { UploadFile, UploadInstance } from 'element-plus';
+import { UploadFilled, Loading } from '@element-plus/icons-vue';
 import { parseRosterFile, type ImportedStudent } from '@/utils/import';
 
 const props = defineProps<{
@@ -83,7 +83,7 @@ function reset(): void {
     </el-upload>
 
     <div v-if="parsing" class="mt-4 flex items-center justify-center gap-2 text-sm text-text-sub">
-      <el-icon class="is-loading"><i class="el-icon-loading" /></el-icon>
+      <el-icon class="is-loading"><Loading /></el-icon>
       正在解析文件…
     </div>
 

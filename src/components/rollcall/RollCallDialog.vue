@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import type { AttendanceStatus, Student } from '@/types';
 import { Check, Close, ArrowLeft, ArrowRight } from '@element-plus/icons-vue';
+import PinyinName from '@/components/common/PinyinName.vue';
 
 const props = defineProps<{
   modelValue: boolean;
@@ -22,6 +23,8 @@ const currentKey = computed(() => props.students[index.value]?.id ?? 'none');
 
 const total = computed(() => props.students.length);
 const currentStudent = computed<Student | undefined>(() => props.students[index.value]);
+/** 接下来 3 个待签到人员 */
+const upcoming = computed(() => props.students.slice(index.value + 1, index.value + 4));
 
 const presentCount = computed(() => Object.values(marks).filter((s) => s === 'present').length);
 const absentCount = computed(() => Object.values(marks).filter((s) => s === 'absent').length);
@@ -151,14 +154,40 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
     <div class="relative flex min-h-[160px] items-center justify-center py-4">
       <transition name="person" mode="out-in">
         <div :key="currentKey" class="text-center">
-          <p class="text-4xl font-bold tracking-wide text-text-main md:text-5xl">
-            {{ currentStudent?.name }}
-          </p>
+          <PinyinName
+            :name="currentStudent?.name || ''"
+            class="text-4xl font-bold tracking-wide text-text-main md:text-5xl"
+          />
           <p class="mt-3 text-sm text-text-sub md:text-base">
             {{ currentStudent?.studentNo || '暂无学号' }}
           </p>
         </div>
       </transition>
+    </div>
+
+    <!-- 接下来三个待签到 -->
+    <div v-if="upcoming.length > 0" class="mt-2">
+      <p class="mb-2 text-center text-xs text-text-sub">接下来</p>
+      <div class="grid grid-cols-3 gap-2">
+        <div
+          v-for="(stu, i) in upcoming"
+          :key="stu.id"
+          class="rounded-lg border px-1 py-2 text-center"
+          style="border-color: var(--color-border); background: var(--color-card)"
+        >
+          <p class="text-[11px] text-text-sub">第 {{ index + 2 + i }} 位</p>
+          <PinyinName :name="stu.name" class="mt-1 text-sm font-semibold leading-tight text-text-main" />
+          <p class="mt-1 truncate text-[11px] text-text-sub">{{ stu.studentNo || '—' }}</p>
+        </div>
+        <div
+          v-for="n in 3 - upcoming.length"
+          :key="'empty-' + n"
+          class="flex items-center justify-center rounded-lg border border-dashed py-2"
+          style="border-color: var(--color-border)"
+        >
+          <span class="text-xs text-text-sub">—</span>
+        </div>
+      </div>
     </div>
 
     <!-- 两个大按钮 -->

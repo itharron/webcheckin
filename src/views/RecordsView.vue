@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import dayjs from 'dayjs';
-import { ElMessage, ElMessageBox } from 'element-plus';
 import { useRosterStore } from '@/stores/roster';
 import { useAttendanceStore } from '@/stores/attendance';
 import type { AttendanceRecord } from '@/types';
@@ -45,12 +44,14 @@ function rateColor(percentage: number): string {
   return '#EF4444';
 }
 
-async function toggleStatus(record: AttendanceRecord): Promise<void> {
+async function toggleStatus(raw: unknown): Promise<void> {
+  const record = raw as AttendanceRecord;
   const next = record.status === 'present' ? 'absent' : 'present';
   await attendance.updateStatus(record.id, next);
 }
 
-async function handleDelete(record: AttendanceRecord): Promise<void> {
+async function handleDelete(raw: unknown): Promise<void> {
+  const record = raw as AttendanceRecord;
   try {
     await ElMessageBox.confirm(`确定删除「${record.name}」的记录吗？`, '删除确认', {
       type: 'warning',

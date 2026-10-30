@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
 import type { Student } from '@/types';
 import { useRosterStore } from '@/stores/roster';
 import AppHeader from '@/components/common/AppHeader.vue';

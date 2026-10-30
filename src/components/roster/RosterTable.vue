@@ -10,6 +10,14 @@ const emit = defineEmits<{
   (e: 'edit', student: Student): void;
   (e: 'delete', student: Student): void;
 }>();
+
+/** el-table 作用域插槽的 row 为 DefaultRow，此处收窄为 Student */
+function onEdit(row: unknown): void {
+  emit('edit', row as Student);
+}
+function onDelete(row: unknown): void {
+  emit('delete', row as Student);
+}
 </script>
 
 <template>
@@ -25,8 +33,8 @@ const emit = defineEmits<{
       </el-table-column>
       <el-table-column label="操作" width="150" align="center">
         <template #default="{ row }">
-          <el-button link type="primary" :icon="Edit" @click="emit('edit', row)">编辑</el-button>
-          <el-button link type="danger" :icon="Delete" @click="emit('delete', row)">删除</el-button>
+          <el-button link type="primary" :icon="Edit" @click="onEdit(row)">编辑</el-button>
+          <el-button link type="danger" :icon="Delete" @click="onDelete(row)">删除</el-button>
         </template>
       </el-table-column>
       <template #empty>
