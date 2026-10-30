@@ -29,9 +29,9 @@ const absentCount = computed(
 );
 
 const statItems = computed(() => [
-  { label: '总人数', value: roster.count, color: '#4F46E5' },
-  { label: '今日已到', value: presentCount.value, color: '#10B981' },
-  { label: '今日未到', value: absentCount.value, color: '#EF4444' },
+  { label: '总人数', value: roster.count, color: '#409EFF' },
+  { label: '今日已到', value: presentCount.value, color: '#67C23A' },
+  { label: '今日未到', value: absentCount.value, color: '#F56C6C' },
 ]);
 
 const recent = computed(() => attendance.recentSession);
@@ -72,7 +72,7 @@ function go(path: string): void {
         >
           <div
             class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl text-white"
-            style="background: linear-gradient(135deg, #4f46e5, #818cf8)"
+            style="background: var(--color-primary)"
           >
             <el-icon :size="26"><Timer /></el-icon>
           </div>
@@ -86,7 +86,7 @@ function go(path: string): void {
         >
           <div
             class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl text-white"
-            style="background: linear-gradient(135deg, #10b981, #34d399)"
+            style="background: var(--color-success)"
           >
             <el-icon :size="26"><User /></el-icon>
           </div>
@@ -100,7 +100,7 @@ function go(path: string): void {
         >
           <div
             class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl text-white"
-            style="background: linear-gradient(135deg, #f59e0b, #fbbf24)"
+            style="background: var(--color-warning)"
           >
             <el-icon :size="26"><Calendar /></el-icon>
           </div>

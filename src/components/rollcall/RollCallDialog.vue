@@ -146,7 +146,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
         :percentage="total ? Math.round((index / total) * 100) : 0"
         :stroke-width="8"
         :show-text="false"
-        color="#4F46E5"
+        color="#409EFF"
       />
     </div>
 
@@ -194,7 +194,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
     <div class="mt-2 grid grid-cols-2 gap-3">
       <button
         class="flex h-20 flex-col items-center justify-center gap-1 rounded-xl text-white transition active:scale-95 md:h-24"
-        style="background: linear-gradient(135deg, #10b981, #34d399)"
+        style="background: var(--color-danger)"
         @click="mark('absent')"
       >
         <el-icon :size="22"><Close /></el-icon>
@@ -202,7 +202,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
       </button>
       <button
         class="flex h-20 flex-col items-center justify-center gap-1 rounded-xl text-white transition active:scale-95 md:h-24"
-        style="background: linear-gradient(135deg, #059669, #10b981)"
+        style="background: var(--color-success)"
         @click="mark('present')"
       >
         <el-icon :size="22"><Check /></el-icon>

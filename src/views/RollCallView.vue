@@ -169,7 +169,7 @@ async function onComplete(results: Array<{ student: Student; status: AttendanceS
       <div class="py-2 text-center">
         <div
           class="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full text-3xl font-bold text-white"
-          style="background: linear-gradient(135deg, #4f46e5, #818cf8)"
+          style="background: var(--color-primary)"
         >
           {{ summary.rate }}%
         </div>

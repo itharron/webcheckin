@@ -6,12 +6,12 @@ export default {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#4F46E5',
-          light: '#818CF8',
+          DEFAULT: '#409EFF',
+          light: '#79BBFF',
         },
-        success: '#10B981',
-        danger: '#EF4444',
-        warning: '#F59E0B',
+        success: '#67C23A',
+        danger: '#F56C6C',
+        warning: '#E6A23C',
         bg: 'var(--color-bg)',
         card: 'var(--color-card)',
         'text-main': 'var(--color-text)',
@@ -22,8 +22,8 @@ export default {
         xl2: '1rem',
       },
       boxShadow: {
-        card: '0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.05)',
-        'card-hover': '0 6px 24px rgba(0, 0, 0, 0.10)',
+        card: '0 1px 2px rgba(0, 0, 0, 0.06)',
+        'card-hover': '0 3px 10px rgba(0, 0, 0, 0.08)',
       },
       keyframes: {
         'fade-in': {

@@ -32,7 +32,7 @@ const percentage = computed(() => {
       :percentage="percentage"
       :stroke-width="12"
       :show-text="false"
-      :color="percentage >= 100 ? '#10B981' : '#4F46E5'"
+      :color="percentage >= 100 ? '#67C23A' : '#409EFF'"
     />
   </div>
 </template>

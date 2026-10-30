@@ -14,7 +14,7 @@ defineProps<{
     <div class="flex items-center gap-3">
       <div
         class="flex h-9 w-9 items-center justify-center rounded-xl text-white"
-        style="background: linear-gradient(135deg, #4f46e5, #818cf8)"
+        style="background: var(--color-primary)"
       >
         <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
           <path

@@ -52,9 +52,9 @@ const dateList = computed(() => {
 });
 
 function rateColor(percentage: number): string {
-  if (percentage >= 80) return '#10B981';
-  if (percentage >= 60) return '#F59E0B';
-  return '#EF4444';
+  if (percentage >= 80) return '#67C23A';
+  if (percentage >= 60) return '#E6A23C';
+  return '#F56C6C';
 }
 
 async function toggleStatus(raw: unknown): Promise<void> {
