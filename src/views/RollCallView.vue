@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import dayjs from 'dayjs';
 import { useRosterStore } from '@/stores/roster';
 import { useAttendanceStore } from '@/stores/attendance';
@@ -30,13 +30,22 @@ const total = computed(() => roster.count);
 const settings = useSettingsStore();
 
 /** 签到事件选择 */
-const selectedEvent = ref('早自习');
-const eventOptions = computed(() => {
-  const base = ['早自习', '晚自习'];
-  const customs = settings.customEvents.filter((e) => !base.includes(e));
-  return [...base, ...customs];
-});
+const selectedEvent = ref('');
+const eventOptions = computed(() => settings.events);
 const currentEvent = computed(() => selectedEvent.value.trim());
+
+// 事件列表变化时：当前选中失效则回退到首项；列表为空则清空选中
+watch(
+  () => settings.events,
+  (list) => {
+    if (list.length > 0 && !list.includes(selectedEvent.value)) {
+      selectedEvent.value = list[0];
+    } else if (list.length === 0) {
+      selectedEvent.value = '';
+    }
+  },
+  { immediate: true }
+);
 
 /** 事件管理弹窗 */
 const manageVisible = ref(false);
@@ -48,11 +57,7 @@ function addEvent(): void {
     ElMessage.warning('请输入事件名称');
     return;
   }
-  if (name === '早自习' || name === '晚自习') {
-    ElMessage.warning('该事件已存在');
-    return;
-  }
-  if (settings.addCustomEvent(name)) {
+  if (settings.addEvent(name)) {
     selectedEvent.value = name;
     newEventName.value = '';
     ElMessage.success('已添加事件');
@@ -62,8 +67,7 @@ function addEvent(): void {
 }
 
 function removeEvent(name: string): void {
-  if (selectedEvent.value === name) selectedEvent.value = '早自习';
-  settings.removeCustomEvent(name);
+  settings.removeEvent(name);
   ElMessage.success('已删除事件');
 }
 
@@ -79,7 +83,7 @@ function startRollCall(): void {
   }
   const event = currentEvent.value;
   if (!event) {
-    ElMessage.warning('请输入自定义事件名称');
+    ElMessage.warning('请先添加签到事件');
     return;
   }
   const already = attendance.recordsForDate(todayStr, event);
@@ -226,26 +230,17 @@ async function onComplete(results: Array<{ student: Student; status: AttendanceS
     >
       <div class="space-y-5">
         <div>
-          <p class="mb-2 text-xs text-text-sub">固定事件</p>
-          <div class="flex flex-wrap gap-2">
-            <el-tag v-for="e in ['早自习', '晚自习']" :key="e" type="info" effect="plain">
-              {{ e }}
-            </el-tag>
-          </div>
-        </div>
-
-        <div>
-          <p class="mb-2 text-xs text-text-sub">自定义事件（可删除）</p>
+          <p class="mb-2 text-xs text-text-sub">事件列表（可删除）</p>
           <div
-            v-if="settings.customEvents.length === 0"
+            v-if="settings.events.length === 0"
             class="rounded-lg border border-dashed p-3 text-center text-xs text-text-sub"
             style="border-color: var(--color-border)"
           >
-            暂无自定义事件，可在下方添加
+            暂无事件，请在下方添加
           </div>
           <div v-else class="flex flex-col gap-2">
             <div
-              v-for="e in settings.customEvents"
+              v-for="e in settings.events"
               :key="e"
               class="flex items-center justify-between rounded-lg px-3 py-2"
               style="border: 1px solid var(--color-border)"

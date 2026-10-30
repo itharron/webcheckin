@@ -3,16 +3,31 @@ import { ref } from 'vue';
 import type { Theme } from '@/types';
 
 const THEME_KEY = 'roll-call-theme';
-const EVENTS_KEY = 'roll-call-custom-events';
+const EVENTS_KEY = 'roll-call-events';
+const LEGACY_EVENTS_KEY = 'roll-call-custom-events';
+const DEFAULT_EVENTS = ['早自习', '晚自习'];
 
-/** 读取用户自定义的签到事件列表 */
-function loadCustomEvents(): string[] {
+/** 读取完整事件列表（含默认事件），并迁移旧版本的自定义事件 */
+function loadEvents(): string[] {
   try {
     const raw = localStorage.getItem(EVENTS_KEY);
-    const arr = raw ? JSON.parse(raw) : [];
-    return Array.isArray(arr) ? arr.filter((s) => typeof s === 'string') : [];
+    if (raw) {
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr)) {
+        const list = arr.filter((s): s is string => typeof s === 'string');
+        if (list.length > 0) return [...new Set(list)];
+      }
+    }
+    // 迁移旧版本保存的自定义事件
+    const legacy: string[] = [];
+    const oldRaw = localStorage.getItem(LEGACY_EVENTS_KEY);
+    if (oldRaw) {
+      const arr = JSON.parse(oldRaw);
+      if (Array.isArray(arr)) legacy.push(...arr.filter((s) => typeof s === 'string'));
+    }
+    return [...new Set([...DEFAULT_EVENTS, ...legacy])];
   } catch {
-    return [];
+    return [...DEFAULT_EVENTS];
   }
 }
 
@@ -20,27 +35,26 @@ function loadCustomEvents(): string[] {
 function detectInitialTheme(): Theme {
   const saved = localStorage.getItem(THEME_KEY);
   if (saved === 'light' || saved === 'dark') return saved;
-  // 未手动选择过主题时，默认使用暗色模式
   return 'dark';
 }
 
 export const useSettingsStore = defineStore('settings', () => {
   const theme = ref<Theme>(detectInitialTheme());
-  const customEvents = ref<string[]>(loadCustomEvents());
+  const events = ref<string[]>(loadEvents());
 
-  /** 新增自定义事件（去重），返回是否成功 */
-  function addCustomEvent(name: string): boolean {
+  /** 新增事件（去重），返回是否成功 */
+  function addEvent(name: string): boolean {
     const trimmed = name.trim();
-    if (!trimmed || customEvents.value.includes(trimmed)) return false;
-    customEvents.value = [...customEvents.value, trimmed];
-    localStorage.setItem(EVENTS_KEY, JSON.stringify(customEvents.value));
+    if (!trimmed || events.value.includes(trimmed)) return false;
+    events.value = [...events.value, trimmed];
+    localStorage.setItem(EVENTS_KEY, JSON.stringify(events.value));
     return true;
   }
 
-  /** 删除自定义事件 */
-  function removeCustomEvent(name: string): void {
-    customEvents.value = customEvents.value.filter((e) => e !== name);
-    localStorage.setItem(EVENTS_KEY, JSON.stringify(customEvents.value));
+  /** 删除事件 */
+  function removeEvent(name: string): void {
+    events.value = events.value.filter((e) => e !== name);
+    localStorage.setItem(EVENTS_KEY, JSON.stringify(events.value));
   }
 
   /** 应用主题到根元素类名（Element Plus 暗色模式依赖 `html.dark`） */
@@ -59,5 +73,5 @@ export const useSettingsStore = defineStore('settings', () => {
   // 初始化即应用一次
   applyTheme();
 
-  return { theme, applyTheme, toggleTheme, customEvents, addCustomEvent, removeCustomEvent };
+  return { theme, applyTheme, toggleTheme, events, addEvent, removeEvent };
 });
