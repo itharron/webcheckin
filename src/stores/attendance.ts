@@ -147,6 +147,34 @@ export const useAttendanceStore = defineStore('attendance', () => {
     return [...new Set(records.value.filter((r) => r.date === date).map((r) => r.event))];
   }
 
+  /** 所有签到事件（日期 + 事件名），按最近签到时间倒序 */
+  const recordEvents = computed(() => {
+    const map = new Map<string, { date: string; event: string; latest: number }>();
+    for (const r of records.value) {
+      const key = `${r.date}|${r.event}`;
+      const cur = map.get(key);
+      if (!cur || r.timestamp > cur.latest) {
+        map.set(key, { date: r.date, event: r.event, latest: r.timestamp });
+      }
+    }
+    return [...map.values()].sort((a, b) => b.latest - a.latest);
+  });
+
+  /** 批量删除记录 */
+  async function removeRecords(ids: string[]): Promise<void> {
+    const idSet = new Set(ids);
+    await Promise.all(ids.map((id) => db.deleteRecord(id)));
+    records.value = records.value.filter((r) => !idSet.has(r.id));
+  }
+
+  /** 删除某日期某事件下的全部记录 */
+  async function clearRecords(date: string, event: string): Promise<void> {
+    const targets = records.value.filter((r) => r.date === date && r.event === event);
+    await Promise.all(targets.map((t) => db.deleteRecord(t.id)));
+    const idSet = new Set(targets.map((t) => t.id));
+    records.value = records.value.filter((r) => !idSet.has(r.id));
+  }
+
   return {
     records,
     sessions,
@@ -161,6 +189,9 @@ export const useAttendanceStore = defineStore('attendance', () => {
     removeRecord,
     recordDates,
     eventsForDate,
+    recordEvents,
+    removeRecords,
+    clearRecords,
     createSession,
     recentSession,
     hasRecords,
